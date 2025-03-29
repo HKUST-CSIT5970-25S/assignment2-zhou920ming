@@ -43,6 +43,8 @@ public class CORPairs extends Configured implements Tool {
 	 */
 	private static class CORMapper1 extends
 			Mapper<LongWritable, Text, Text, IntWritable> {
+		private static final IntWritable ONE = new IntWritable(1);
+		private static final Text KEY = new Text();
 		@Override
 		public void map(LongWritable key, Text value, Context context)
 				throws IOException, InterruptedException {
@@ -53,6 +55,15 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			
+			while(doc_tokenizer.hasMoreTokens()) { 
+				
+				String st = doc_tokenizer.nextToken();
+				Text.set(st)
+				context.write(Text, ONE);
+			
+				
+            		}
 		}
 	}
 

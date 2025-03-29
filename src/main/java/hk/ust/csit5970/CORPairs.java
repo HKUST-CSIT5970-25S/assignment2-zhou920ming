@@ -32,7 +32,7 @@ import java.util.*;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import java.util.List
+import java.util.List;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -63,11 +63,11 @@ public class CORPairs extends Configured implements Tool {
 			while(doc_tokenizer.hasMoreTokens()) { 
 				
 				String st = doc_tokenizer.nextToken();
-				Text.set(st)
-				context.write(Text, ONE);
+				KEY.set(st);
+				context.write(KEY, ONE);
 			
 				
-            		}
+            }
 		}
 	}
 
@@ -107,8 +107,8 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			List<String> words = new ArrayList<>();
-			List<String> wp = new ArrayList<>();
+			List words = new ArrayList();
+			List wp = new ArrayList();
 			while(doc_tokenizer.hasMoreTokens()) { 
 				
 				String word1 = doc_tokenizer.nextToken();
@@ -118,25 +118,27 @@ public class CORPairs extends Configured implements Tool {
 			for(int i=0; i< words.size(); i++){
 				for(int j=i; j< words.size(); j++){
 					if (i!=j){
-						String w1=words.get(i);
-						String w2=words.get(j);
+						String w1=(String)words.get(i);
+						String w2=(String)words.get(j);
 						boolean b=true;
 						for (int k=0;k<wp.size();k=k+2){
-							if( (wp.get(k).equals(w1) && wp.get(k+1).equals(w2)) || (wp.get(k+1).equals(w1) && wp.get(k).equals(w2) )){
+							String wk1=(String)wp.get(k);
+							String wk2=(String)wp.get(k+1);
+							if( (wk1.equals(w1) && wk2.equals(w2)) || (wk2.equals(w1) && wk1.equals(w2) )){
 								b=false;
 								break;
 							}
 						}
 						if (b){
 							wp.add(w1);
-							wp.add(w2)
+							wp.add(w2);
 						}
 						
 					}
 				}
 			}
 			for (int k=0;k<wp.size();k=k+2){
-				BIGRAM.set(wp.get(k), wp.get(k+1));
+				BIGRAM.set((String)wp.get(k), (String)wp.get(k+1));
 				context.write(BIGRAM, ONE);
 			}
 			
@@ -207,7 +209,7 @@ public class CORPairs extends Configured implements Tool {
 		/*
 		 * TODO: write your second-pass Reducer here.
 		 */
-		private final static IntWritable RES = new IntWritable();
+		private final static DoubleWritable RES = new DoubleWritable();
 		@Override
 		protected void reduce(PairOfStrings key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
 			/*
@@ -218,7 +220,11 @@ public class CORPairs extends Configured implements Tool {
 			while (iter.hasNext()) {
 				su += iter.next().get();
 			}
-			RES.set(su/(word_total_map.get(key.getLeftElement())*word_total_map.get(key.getRightElement())))
+
+			Double l1=(double)word_total_map.get(key.getLeftElement());
+			Double r1=(double)word_total_map.get(key.getRightElement());
+			Double res=su/(l1*r1);
+			RES.set(res);
 			
 			context.write(key, RES);
 		}

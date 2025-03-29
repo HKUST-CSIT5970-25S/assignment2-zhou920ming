@@ -51,7 +51,7 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 				throws IOException, InterruptedException {
 			String line = ((Text) value).toString();
 			String[] words = line.trim().split("\\s+");
-			String[] w2="";
+			String w2="";
 			/*
 			 * TODO: Your implementation goes here.
 			 */
@@ -96,7 +96,7 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 			while (iter.hasNext()) {
 				sum += iter.next().get();
 			}
-			if (key.getRightElement()==""){
+			if (key.getRightElement().equals("")){
 				TOTAL.set(sum);
 				VALUE.set(sum);
 			}
@@ -241,3 +241,4 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 		ToolRunner.run(new BigramFrequencyPairs(), args);
 	}
 }
+

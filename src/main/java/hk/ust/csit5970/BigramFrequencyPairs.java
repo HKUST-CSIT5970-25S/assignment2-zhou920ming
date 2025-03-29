@@ -119,11 +119,11 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 			 * TODO: Your implementation goes here.
 			 */
 			Iterator<IntWritable> iter = values.iterator();
-			int sum = 0;
+			int su = 0;
 			while (iter.hasNext()) {
-				sum += iter.next().get();
+				su += iter.next().get();
 			}
-			SUM.set(sum);
+			SUM.set(su);
 			context.write(key, SUM);
 		}
 	}

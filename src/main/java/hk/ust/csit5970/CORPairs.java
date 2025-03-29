@@ -71,13 +71,22 @@ public class CORPairs extends Configured implements Tool {
 	 * TODO: Write your first-pass reducer here.
 	 */
 	private static class CORReducer1 extends
+		
 			Reducer<Text, IntWritable, Text, IntWritable> {
+		private final static IntWritable SUM = new IntWritable();
+		
 		@Override
-		public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-			/*
-			 * TODO: Your implementation goes here.
-			 */
+		public void reduce(Text key, Iterable<IntWritable> values, Context context) 
+				throws IOException, InterruptedException {
+			Iterator<IntWritable> iter = values.iterator();
+			int sum = 0;
+			while (iter.hasNext()) {
+				sum += iter.next().get();
+			}
+			SUM.set(sum);
+			context.write(key, SUM);
 		}
+		
 	}
 
 

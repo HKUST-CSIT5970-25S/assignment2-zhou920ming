@@ -98,6 +98,8 @@ public class CORPairs extends Configured implements Tool {
 	 * TODO: Write your second-pass Mapper here.
 	 */
 	public static class CORPairsMapper2 extends Mapper<LongWritable, Text, PairOfStrings, IntWritable> {
+		private static final IntWritable ONE = new IntWritable(1);
+		private static final PairOfStrings BIGRAM = new PairOfStrings();
 		@Override
 		protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 			// Please use this tokenizer! DO NOT implement a tokenizer by yourself!
@@ -114,7 +116,7 @@ public class CORPairs extends Configured implements Tool {
 				
 			}
 			for(int i=0; i< words.size(); i++){
-				for(int j=0; j< words.size(); j++){
+				for(int j=i; j< words.size(); j++){
 					if (i!=j){
 						String w1=words.get(i);
 						String w2=words.get(j);
@@ -133,6 +135,10 @@ public class CORPairs extends Configured implements Tool {
 					}
 				}
 			}
+			for (int k=0;k<wp.size();k=k+2){
+				BIGRAM.set(wp.get(k), wp.get(k+1));
+				context.write(BIGRAM, ONE);
+			}
 			
 		}
 	}
@@ -141,11 +147,19 @@ public class CORPairs extends Configured implements Tool {
 	 * TODO: Write your second-pass Combiner here.
 	 */
 	private static class CORPairsCombiner2 extends Reducer<PairOfStrings, IntWritable, PairOfStrings, IntWritable> {
+		private static final IntWritable SUM = new IntWritable();
 		@Override
 		protected void reduce(PairOfStrings key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			Iterator<IntWritable> iter = values.iterator();
+			int su = 0;
+			while (iter.hasNext()) {
+				su += iter.next().get();
+			}
+			SUM.set(su);
+			context.write(key, SUM);
 		}
 	}
 
@@ -193,11 +207,20 @@ public class CORPairs extends Configured implements Tool {
 		/*
 		 * TODO: write your second-pass Reducer here.
 		 */
+		private final static IntWritable RES = new IntWritable();
 		@Override
 		protected void reduce(PairOfStrings key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			Iterator<IntWritable> iter = values.iterator();
+			int su= 0;
+			while (iter.hasNext()) {
+				su += iter.next().get();
+			}
+			RES.set(su/(word_total_map.get(key.getLeftElement())*word_total_map.get(key.getRightElement())))
+			
+			context.write(key, RES);
 		}
 	}
 

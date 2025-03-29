@@ -32,6 +32,10 @@ import java.util.*;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import java.util.List
+import java.util.Arrays;
+import java.util.Iterator;
+
 /**
  * Compute the bigram count using "pairs" approach
  */
@@ -101,6 +105,35 @@ public class CORPairs extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			List<String> words = new ArrayList<>();
+			List<String> wp = new ArrayList<>();
+			while(doc_tokenizer.hasMoreTokens()) { 
+				
+				String word1 = doc_tokenizer.nextToken();
+				words.add(word1);
+				
+			}
+			for(int i=0; i< words.size(); i++){
+				for(int j=0; j< words.size(); j++){
+					if (i!=j){
+						String w1=words.get(i);
+						String w2=words.get(j);
+						boolean b=true;
+						for (int k=0;k<wp.size();k=k+2){
+							if( (wp.get(k).equals(w1) && wp.get(k+1).equals(w2)) || (wp.get(k+1).equals(w1) && wp.get(k).equals(w2) )){
+								b=false;
+								break;
+							}
+						}
+						if (b){
+							wp.add(w1);
+							wp.add(w2)
+						}
+						
+					}
+				}
+			}
+			
 		}
 	}
 

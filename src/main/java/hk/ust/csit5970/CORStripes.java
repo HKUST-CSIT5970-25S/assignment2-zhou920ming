@@ -191,11 +191,33 @@ public class CORStripes extends Configured implements Tool {
 		/*
 		 * TODO: Write your second-pass Reducer here.
 		 */
+		private final static HashMapStringIntWritable SUM_STRIPES = new HashMapStringIntWritable();
+		private final static PairOfStrings BIGRAM = new PairOfStrings();
+		private final static IntWritable COUNT = new IntWritable();
 		@Override
 		protected void reduce(Text key, Iterable<MapWritable> values, Context context) throws IOException, InterruptedException {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			Iterator<HashMapStringIntWritable> iter = values.iterator();
+			String first_w = key.toString();
+			while (iter.hasNext()) {
+				SUM_STRIPES.plus(iter.next());
+			}
+			
+	        for (Entry<String, Integer> mapElement : SUM_STRIPES.entrySet()) { 
+	            String second_w = (String) mapElement.getKey(); 
+	            Double value = (double) mapElement.getValue();
+			Double l1=(double)word_total_map.get(first_w);
+			Double r1=(double)word_total_map.get(second_w);
+			value=value/(l1*r1);
+	            BIGRAM.set(first_w, second_w);
+	            COUNT.set(value);
+	            context.write(BIGRAM, COUNT);
+	        }
+	        
+	        SUM_STRIPES.clear();
+			
 		}
 	}
 

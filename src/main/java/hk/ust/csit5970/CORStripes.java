@@ -22,6 +22,10 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.*;
 
+import java.util.List;
+import java.util.Arrays;
+import java.util.Iterator;
+
 /**
  * Compute the bigram count using "pairs" approach
  */
@@ -33,6 +37,8 @@ public class CORStripes extends Configured implements Tool {
 	 */
 	private static class CORMapper1 extends
 			Mapper<LongWritable, Text, Text, IntWritable> {
+		private static final IntWritable ONE = new IntWritable(1);
+		private static final Text KEY = new Text();
 		@Override
 		public void map(LongWritable key, Text value, Context context)
 				throws IOException, InterruptedException {
@@ -43,6 +49,15 @@ public class CORStripes extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			
+			while(doc_tokenizer.hasMoreTokens()) { 
+				
+				String st = doc_tokenizer.nextToken();
+				KEY.set(st);
+				context.write(KEY, ONE);
+			
+				
+            }
 		}
 	}
 
@@ -50,12 +65,20 @@ public class CORStripes extends Configured implements Tool {
 	 * TODO: Write your first-pass reducer here.
 	 */
 	private static class CORReducer1 extends
+		
 			Reducer<Text, IntWritable, Text, IntWritable> {
+		private final static IntWritable SUM = new IntWritable();
+		
 		@Override
-		public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-			/*
-			 * TODO: Your implementation goes here.
-			 */
+		public void reduce(Text key, Iterable<IntWritable> values, Context context) 
+				throws IOException, InterruptedException {
+			Iterator<IntWritable> iter = values.iterator();
+			int sum = 0;
+			while (iter.hasNext()) {
+				sum += iter.next().get();
+			}
+			SUM.set(sum);
+			context.write(key, SUM);
 		}
 	}
 
@@ -63,6 +86,8 @@ public class CORStripes extends Configured implements Tool {
 	 * TODO: Write your second-pass Mapper here.
 	 */
 	public static class CORStripesMapper2 extends Mapper<LongWritable, Text, Text, MapWritable> {
+		private static final Text KEY = new Text();
+		private static final HashMapStringIntWritable STRIPE = new HashMapStringIntWritable();
 		@Override
 		protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 			Set<String> sorted_word_set = new TreeSet<String>();
@@ -75,6 +100,26 @@ public class CORStripes extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			String sk="";
+			
+			 for (String ke : sorted_word_set) {
+				if (sk.equals(ke)){continue;}
+				sk=ke;
+				 KEY.set(ke);
+				String sv="";
+            			for (String va : sorted_word_set) {
+					if (sv.equals(va)){continue;}
+					sv=va;
+					if(va.compareTo(ke)<0){
+						continue;
+					}
+					STRIPE.increment(va);
+					context.write(KEY, STRIPE);
+					
+					STRIPE.clear();
+					
+				}
+			 }
 		}
 	}
 
@@ -83,12 +128,21 @@ public class CORStripes extends Configured implements Tool {
 	 */
 	public static class CORStripesCombiner2 extends Reducer<Text, MapWritable, Text, MapWritable> {
 		static IntWritable ZERO = new IntWritable(0);
-
+		private final static HashMapStringIntWritable SUM_STRIPES = new HashMapStringIntWritable();
 		@Override
 		protected void reduce(Text key, Iterable<MapWritable> values, Context context) throws IOException, InterruptedException {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			Iterator<HashMapStringIntWritable> iter = stripes.iterator();
+
+			while (iter.hasNext()) {
+				for ( String second_w : iter.next().keySet() ) {
+					SUM_STRIPES.increment(second_w);
+				}
+			}
+			context.write(key, SUM_STRIPES);
+			SUM_STRIPES.clear();
 		}
 	}
 

@@ -120,6 +120,7 @@ public class CORPairs extends Configured implements Tool {
 					if (i!=j){
 						String w1=(String)words.get(i);
 						String w2=(String)words.get(j);
+						if (w1.equals(w2)){continue;}
 						boolean b=true;
 						for (int k=0;k<wp.size();k=k+2){
 							String wk1=(String)wp.get(k);

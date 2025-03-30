@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Map.Entry;
 
 /**
  * Compute the bigram count using "pairs" approach
@@ -87,7 +88,9 @@ public class CORStripes extends Configured implements Tool {
 	 */
 	public static class CORStripesMapper2 extends Mapper<LongWritable, Text, Text, MapWritable> {
 		private static final Text KEY = new Text();
-		private static final HashMapStringIntWritable STRIPE = new HashMapStringIntWritable();
+		private static final Text KEY2 = new Text();
+		private static final MapWritable STRIPE = new MapWritable();
+		static IntWritable ONE = new IntWritable(1);
 		@Override
 		protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 			Set<String> sorted_word_set = new TreeSet<String>();
@@ -107,13 +110,14 @@ public class CORStripes extends Configured implements Tool {
 				sk=ke;
 				 KEY.set(ke);
 				String sv="";
-            			for (String va : sorted_word_set) {
+            	for (String va : sorted_word_set) {
 					if (sv.equals(va)){continue;}
 					sv=va;
-					if(va.compareTo(ke)<0){
+					if(va.compareTo(ke)<=0){
 						continue;
 					}
-					STRIPE.increment(va);
+					KEY2.set(va);
+					STRIPE.put(KEY2,ONE);
 					context.write(KEY, STRIPE);
 					
 					STRIPE.clear();
@@ -128,22 +132,32 @@ public class CORStripes extends Configured implements Tool {
 	 */
 	public static class CORStripesCombiner2 extends Reducer<Text, MapWritable, Text, MapWritable> {
 		static IntWritable ZERO = new IntWritable(0);
-		private final static HashMapStringIntWritable SUM_STRIPES = new HashMapStringIntWritable();
+		static IntWritable ONE= new IntWritable(1);
+		private final static MapWritable SUM_STRIPES = new MapWritable();
 		@Override
 		protected void reduce(Text key, Iterable<MapWritable> values, Context context) throws IOException, InterruptedException {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			Iterator<HashMapStringIntWritable> iter = stripes.iterator();
+			Iterator<MapWritable> iter = values.iterator();
 
 			while (iter.hasNext()) {
-				for ( String second_w : iter.next().keySet() ) {
-					SUM_STRIPES.increment(second_w);
+				for ( Writable second_w : iter.next().keySet() ) {
+					if (SUM_STRIPES.containsKey(second_w)) {
+						IntWritable i = new IntWritable();
+						i.set(((IntWritable)SUM_STRIPES.get(second_w)).get()+ 1);
+						
+						SUM_STRIPES.put(second_w,i );
+					} else {
+						SUM_STRIPES.put(second_w, ONE);
+
+					}
 				}
 			}
 			context.write(key, SUM_STRIPES);
 			SUM_STRIPES.clear();
 		}
+			
 	}
 
 	/*
@@ -191,23 +205,37 @@ public class CORStripes extends Configured implements Tool {
 		/*
 		 * TODO: Write your second-pass Reducer here.
 		 */
-		private final static HashMapStringIntWritable SUM_STRIPES = new HashMapStringIntWritable();
+		private final static MapWritable SUM_STRIPES = new MapWritable();
 		private final static PairOfStrings BIGRAM = new PairOfStrings();
-		private final static IntWritable COUNT = new IntWritable();
+		private final static DoubleWritable COUNT = new DoubleWritable();
 		@Override
 		protected void reduce(Text key, Iterable<MapWritable> values, Context context) throws IOException, InterruptedException {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
-			Iterator<HashMapStringIntWritable> iter = values.iterator();
+			Iterator<MapWritable> iter = values.iterator();
 			String first_w = key.toString();
 			while (iter.hasNext()) {
-				SUM_STRIPES.plus(iter.next());
+				
+				for (Map.Entry<Writable,Writable > e : iter.next().entrySet()) {
+					Text k1 =(Text) (e.getKey());
+					
+					if (SUM_STRIPES.containsKey(k1)) {
+						IntWritable i = new IntWritable();
+						i.set(((IntWritable)SUM_STRIPES.get(k1)).get()+ ((IntWritable)(e.getValue())).get());
+						SUM_STRIPES.put(k1, i);
+					} else {
+						
+						SUM_STRIPES.put(k1, e.getValue());
+
+					}
+				
+				}
 			}
 			
-	        for (Entry<String, Integer> mapElement : SUM_STRIPES.entrySet()) { 
-	            String second_w = (String) mapElement.getKey(); 
-	            Double value = (double) mapElement.getValue();
+	        for (Entry< Writable, Writable> mapElement : SUM_STRIPES.entrySet()) { 
+	            String second_w = (String) mapElement.getKey().toString(); 
+	            Double value = (double) (((IntWritable)(mapElement.getValue())).get());
 			Double l1=(double)word_total_map.get(first_w);
 			Double r1=(double)word_total_map.get(second_w);
 			value=value/(l1*r1);
@@ -343,3 +371,4 @@ public class CORStripes extends Configured implements Tool {
 		ToolRunner.run(new CORStripes(), args);
 	}
 }
+
